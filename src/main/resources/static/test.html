@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:v-on="http://www.w3.org/1999/xhtml" xmlns:v-bind="http://www.w3.org/1999/xhtml">
+<head>
+    <title>登录</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="css/drag.css">
+    <link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap.min.css">
+    <script src="js/jquery-1.12.4.js"></script>
+    <script src="js/drag.js"></script>
+    <script src="bootstrap-3.3.7-dist/js/bootstrap.js"></script>
+    <script src="js/axios.js"></script>
+    <script src="js/vue.js"></script>
+    <script src="js/jquery.cookie.js"></script>
+    <script src="js/jssha256.js"></script>
+</head>
+<body>
+<div class="container" id="bd" style="margin-top: 10px">
+    <div class="col-md-6" style="background-color: #f5e79e">
+        <h2>移动端认证</h2>
+        <form id="mobileRequest" style="border: 1px">
+            <div class="form-group">
+                <label>账号</label>
+                <input class="form-control" name="account"/>
+            </div>
+            <div class="text-right">
+                <span class="btn btn-primary" v-on:click="request">请求</span>
+            </div>
+        </form>
+        <form id="mobileConfirm" style="border: 1px">
+            <div class="form-group">
+                <label>账号</label>
+                <input class="form-control" name="account"/>
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input class="form-control" name="pass"/>
+            </div>
+            <div class="form-group">
+                <label>密钥</label>
+                <input class="form-control" name="massage"/>
+            </div>
+            <div class="text-right">
+                <span class="btn btn-primary" v-on:click="confirm">认证</span>
+            </div>
+        </form>
+        <form id="AcodeForm" style="border: 1px">
+            <div class="form-group">
+                <label>认证码</label>
+                <input class="form-control" name="acode"/>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-6" style="background-color: #419641">
+        <h2>感知端认证</h2>
+        <form id="clientRequest" style="border: 1px">
+            <div class="form-group">
+                <label>账号</label>
+                <input class="form-control" name="cid"/>
+            </div>
+            <div class="text-right">
+                <span class="btn btn-primary" v-on:click="ClientRequest">请求</span>
+            </div>
+        </form>
+        <form id="clientConfirm" style="border: 1px">
+            <div class="form-group">
+                <label>账号</label>
+                <input class="form-control" name="cid"/>
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input class="form-control" name="pass"/>
+            </div>
+            <div class="form-group">
+                <label>密钥</label>
+                <input class="form-control" name="massage"/>
+            </div>
+            <div class="text-right">
+                <span class="btn btn-primary" v-on:click="clientConfirm">认证</span>
+            </div>
+        </form>
+        <form id="clientAcodeForm" style="border: 1px">
+            <div class="form-group">
+                <label>认证码</label>
+                <input class="form-control" name="acode"/>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-6" style="background-color: #ccc;min-height: 300px">
+        <h2>移动端获取图片</h2>
+        <form id="mobileGet" style="border: 1px">
+            <div class="form-group">
+                <label>账号</label>
+                <input class="form-control" name="account"/>
+            </div>
+            <div class="form-group">
+                <label>认证码</label>
+                <input class="form-control" name="Acode"/>
+            </div>
+            <div class="text-right">
+                <span class="btn btn-primary" v-on:click="mobileGetImg">开始获取</span>
+            </div>
+        </form>
+        <table class="checkbox-round table table-hover table-responsive table-bordered "
+               style="text-align: center;margin: 20px;width: 97%">
+            <tr class="row">
+                <td>序号</td>
+                <td>图片</td>
+                <td>客户端账号</td>
+                <td>提交时间</td>
+                <td></td>
+            </tr>
+            <tr class="row" v-for="(image,index) in images " v-cloak>
+                <td>
+                    {{index+1}}
+                </td>
+                <td>
+                    <img style="width: 143px;height: 70px" class="img-rounded" v-bind:src="image.url">
+                </td>
+                <td>{{image.cAccount}}</td>
+                <td>{{image.inTime}}</td>
+                <td>
+                    <div class="btn-group" role="group" aria-label="...">
+                        <button class="btn btn-danger" v-on:click="deleteImage(image)">删除</button>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="col-md-6" style="background-color: #4BD28C">
+        <h2>感知端上传图片</h2>
+        <form id="putImg" style="border: 1px">
+            <div class="form-group">
+                <label>账号</label>
+                <input class="form-control" name="cid"/>
+            </div>
+            <div class="form-group">
+                <label>认证码</label>
+                <input class="form-control" name="Acode"/>
+            </div>
+            <div class="form-group">
+                <label>图片编码</label>
+                <textarea class="form-control" name="base64Img">
+                </textarea>
+            </div>
+            <div class="text-right">
+                <span class="btn btn-primary" v-on:click="cliPutImg">提交</span>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    var vu = new Vue({
+            el: "#bd",
+            data: {
+                images: {},
+            },
+            mounted() {
+            },
+            methods: {
+                sha256: function (pass, massage) {
+                    HMAC_SHA256_init(massage);
+                    HMAC_SHA256_write(pass);
+                    mac = HMAC_SHA256_finalize();
+                    mac_hex = array_to_hex_string(mac);
+                    console.log(mac_hex);
+                    return mac_hex;
+                },
+                request: function () {
+                    axios.post('/mobile/request', $('#mobileRequest').serialize())
+                        .then(function (response) {
+                            var data = response.data;
+                            $('#mobileConfirm').find('input[name=massage]').val(data.random)
+                        })
+                },
+                confirm: function () {
+                    var el = $('#mobileConfirm');
+                    var confirm = vu.$options.methods.sha256(el.find('input[name=pass]').val(), el.find('input[name=massage]').val());
+                    var form = new FormData($("#mobileConfirm")[0]);
+                    form.append('confirm', confirm);
+                    axios.post('/mobile/confirm', form)
+                        .then(function (response) {
+                            console.log(response.data)
+                            $("#AcodeForm").find('input[name=acode]').val(response.data.authCode);
+                        })
+                },
+                ClientRequest: function () {
+                    axios.post('/cli/request', $('#clientRequest').serialize())
+                        .then(function (response) {
+                            var data = response.data;
+                            $('#clientConfirm').find('input[name=massage]').val(data.random)
+                        })
+                },
+                clientConfirm: function () {
+                    var el = $('#clientConfirm');
+                    var confirm = vu.$options.methods.sha256(el.find('input[name=pass]').val(), el.find('input[name=massage]').val());
+                    var form = new FormData($("#clientConfirm")[0]);
+                    form.append('confirm', confirm);
+                    axios.post('/cli/confirm', form)
+                        .then(function (response) {
+                            console.log(response.data)
+                            $("#clientAcodeForm").find('input[name=acode]').val(response.data.authCode);
+                        })
+                },
+                mobileGetImg: function () {
+                    setInterval(function () {
+                        var form = new FormData($("#mobileGet")[0])
+                        axios.post('/mobile/haveImg', form)
+                            .then(function (response) {
+                                var data = response.data;
+                                console.log(data);
+                                if (data.msg) {
+                                    axios.post('/mobile/getImg', form)
+                                        .then(function (response) {
+                                            var data = response.data;
+                                            console.log(data)
+                                            vu.images = data.data;
+                                        });
+                                }
+                            })
+                    }, 10000);
+                },
+                cliPutImg: function () {
+                    var el = $('#putImg');
+                    axios.post('/cli/putImg', el.serialize())
+                        .then(function (response) {
+                            console.log(response.data)
+                        })
+                }
+            },
+        }
+    );
+
+</script>
+</body>
+</html>

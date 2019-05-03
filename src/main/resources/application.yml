@@ -1,0 +1,17 @@
+spring:
+      datasource:
+          driver-class-name: com.mysql.jdbc.Driver
+          url: jdbc:mysql://192.168.145.128:3306/perception?characterEncoding=utf-8&useSSL=false
+          username: root
+          password: root
+      jpa:
+        hibernate:
+          ddl-auto: update
+        show-sql: false
+        database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+server:
+  port: 80
+  tomcat:
+    uri-encoding: UTF-8
+  servlet:
+    context-path: /

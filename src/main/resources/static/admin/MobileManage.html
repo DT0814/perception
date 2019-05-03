@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:v-on="http://www.w3.org/1999/xhtml" xmlns:v-bind="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="stylesheet" href="../bootstrap-3.3.7-dist/css/bootstrap.min.css">
+    <link href="../css/custom-styles.css" rel="stylesheet"/>
+    <link href="../css/checkbox3.min.css" rel="stylesheet"/>
+    <link href="../css/pintuer.css" rel="stylesheet">
+    <link href="../css/admin.css" rel="stylesheet">
+    <script src="../js/jquery-1.12.4.js"></script>
+    <script src="../bootstrap-3.3.7-dist/js/bootstrap.js"></script>
+    <script src="../js/axios.js"></script>
+    <script src="../js/vue.js"></script>
+    <script src="../js/jquery.cookie.js"></script>
+    <script src="../js/pintuer.js"></script>
+
+</head>
+<body>
+<div id="bd" class="container" v-cloak style="width: 100%;background: rgb(237, 237, 237)">
+    <div class="header" style="background: rgb(237, 237, 237);margin: 10px">
+        <h1 class="page-header" style="font-size: 36px">
+            感知系统后台管理系统
+            <small>移动端管理</small>
+        </h1>
+    </div>
+    <div class="row" style="background: rgb(237, 237, 237);margin: 10px">
+        <div class="col-md-6 form-inline ">
+            <div class="form-group">
+                <select id="querySelect" class="form-control" style="height: 35px;margin: 0px">
+                    <option value="0" selected>查询全部</option>
+                    <option value="name">名字</option>
+                    <option value="account">账号查询</option>
+                </select>
+                <input id="queryInput" class="form-control" style="height: 35px">
+                <span class="btn btn-default " v-on:click="query()">查询</span>
+            </div>
+        </div>
+    </div>
+    <div class="row table-responsive" style="text-align: center;background: rgb(237, 237, 237)">
+        <table class="checkbox-round table table-hover table-responsive table-bordered "
+               style="text-align: center;margin: 20px;width: 97%">
+            <tr class="row">
+                <td>序号</td>
+                <td>姓名</td>
+                <td>账号</td>
+                <td>信息</td>
+                <td>注册时间</td>
+                <td>
+                    <button style="height: 35px;margin: 0px" type="button" class="btn btn-success"
+                            aria-label="Left Align"
+                            v-on:click="addmodal()">
+                        添加移动端设备
+                    </button>
+                </td>
+            </tr>
+            <tr class="row" v-for="(mobile,index) in mobiles " v-cloak>
+                <td>
+                    {{index+1}}
+                </td>
+                <td>{{mobile.name}}</td>
+                <td>{{mobile.account}}</td>
+                <td>{{mobile.minfo}}</td>
+                <td>{{mobile.inTime}}</td>
+                <td>
+                    <div class="btn-group" role="group" aria-label="...">
+                        <button class="btn btn-primary " v-on:click="updateModal(mobile)">修改</button>
+                        <button class="btn btn-danger" v-on:click="deleteMobile(mobile)">删除</button>
+                        <button class="btn btn-info" v-on:click="show(mobile)">查看关联客户端</button>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="row" style="background: rgb(237, 237, 237)">
+        <div class="checkbox col-md-1">
+        </div>
+        <div class="col-md-11" style="text-align: center">
+            <nav aria-label="Page navigation" class="col-md-8">
+                <ul class="pagination">
+                    <li v-if="!pageInfo.firstPage">
+                        <a v-on:click="topage(pageInfo.proPage)" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    <template v-for="num in pageInfo.navigatepageNums">
+                        <template v-if="pageInfo.currentNum==num">
+                            <li class="active" v-on:click="topage(num)">
+                                <span>{{num}} <span class="sr-only">(currentNum)</span></span>
+                            </li>
+                        </template>
+                        <template v-else>
+                            <li v-on:click="topage(num)"><span>
+                            <span aria-hidden="true">{{num}}</span>   </span>
+                            </li>
+                        </template>
+                    </template>
+                    <li v-if="!pageInfo.lastPage">
+                        <a v-on:click="topage(pageInfo.nextPage)" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+    </div>
+    <!-- 添加展示窗口 -->
+    <div id="addModal" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <button class="close" id="addClose" data-dismiss="modal">
+                    </button>
+                </div>
+                <div class="modal-title">
+                    <h1 class="text-center">添加</h1>
+                </div>
+                <div class="modal-body">
+                    <form class="form-group" id="addForm">
+                        <div class="form-group">
+                            <label>登录账户</label>
+                            <input type="text" name="account" class="form-control" placeholder="输入登录账户">
+                        </div>
+                        <div class="form-group">
+                            <label>登录密码</label>
+                            <input type="text" name="pass" class="form-control" placeholder="输入登录密码">
+                        </div>
+                        <div class="form-group">
+                            <label>设备名</label>
+                            <input type="text" name="name" class="form-control" placeholder="输入设备名">
+                        </div>
+                        <div class="form-group">
+                            <label>设备介绍</label>
+                            <input type="text" name="minfo" class="form-control" placeholder="输入设备介绍可为空">
+                        </div>
+                        <div class="text-right">
+                            <span class="btn btn-primary" v-on:click="add">提交</span>
+                            <button class="btn btn-danger" data-dismiss="modal">取消</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 修改展示窗口 -->
+    <div id="updateModal" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <button class="close" data-dismiss="modal">
+                    </button>
+                </div>
+                <div class="modal-title">
+                    <h1 class="text-center">修改</h1>
+                </div>
+                <div class="modal-body">
+                    <form id="updateForm">
+                        <div class="form-group">
+                            <label>用户名</label>
+                            <input class="form-control" name="name"/>
+                        </div>
+                        <div class="form-group">
+                            <label>设备介绍</label>
+                            <input class="form-control" name="minfo" type="text">
+                        </div>
+                        <div class="form-group">
+                            <label>账号</label>
+                            <input class="form-control" name="account" type="text" disabled>
+                        </div>
+                        <div class="text-right">
+                            <span class="btn btn-primary" v-on:click="update">提交</span>
+                            <button class="btn btn-danger" data-dismiss="modal">取消</button>
+                        </div>
+                        <input type="hidden" name="mid">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 添加客户端窗口 -->
+    <div id="addClientModal" class="modal fade" style="z-index: 10000">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <button class="close" id="addClientClose" data-dismiss="modal">
+                    </button>
+                </div>
+                <div class="modal-title">
+                    <h1 class="text-center">添加</h1>
+                </div>
+                <div class="modal-body">
+                    <form class="form-group" id="addClientForm">
+                        <div class="form-group">
+                            <label>选择需要关联的客户端</label>
+                            <select name="cid" class="form-control">
+                                <option v-for="client in clients" v-bind:value="client.cid">{{client.account}}</option>
+                            </select>
+                        </div>
+                        <div class="text-right">
+                            <span class="btn btn-primary" v-on:click="addClient">提交</span>
+                            <button class="btn btn-danger" data-dismiss="modal">取消</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 客户端关联关系展示窗口 -->
+    <div id="clientModal" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <button class="close" id="clientModalClose" data-dismiss="modal">
+                    </button>
+                </div>
+                <div class="modal-title">
+                    <h1 class="text-center">关联客户端</h1>
+                </div>
+                <div class="modal-body">
+                    <table class="checkbox-round table table-hover table-responsive table-bordered "
+                           style="text-align: center;margin: 20px;width: 97%">
+                        <tr class="row">
+                            <td>序号</td>
+                            <td>客户端账号</td>
+                            <td>
+                                <button style="height: 35px;margin: 0px" type="button" class="btn btn-success"
+                                        aria-label="Left Align"
+                                        v-on:click="addClientModal()">
+                                    添加关联客户端
+                                </button>
+                            </td>
+                        </tr>
+                        <tr class="row" v-for="(cliMob,index) in clientMobiles " v-cloak>
+                            <td>
+                                {{index+1}}
+                            </td>
+                            <td>{{cliMob.cAccount}}</td>
+                            <td>
+                                <div class="btn-group" role="group" aria-label="...">
+                                    <button class="btn btn-danger" v-on:click="deleteCliMob(cliMob)">解除关联</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 查询表单-->
+    <form id="queryForm">
+        <input name="name" type="hidden"/>
+        <input name="account" type="hidden"/>
+    </form>
+</div>
+<script>
+    var vu = new Vue({
+            el: "#bd",
+            data: {
+                pageInfo: {},
+                mobiles: {},
+                mobile: {},
+                clientMobiles: {},
+                admin: {},
+                clients: {},
+                num: {},
+                nums: "",
+                modals: "",
+            },
+            mounted() {
+                /*axios.get('../admin/findByAid?aid=' + $.cookie('admin_aid'))
+                    .then(function (response) {
+                        var data = response.data;
+                        if (data.code == 200) {
+                            vu.admin = data.data;
+                        } else {
+                            $.cookie('admin_aid', null, {expires: -1, path: '/'});
+                            $.cookie('admin_isLogin', null, {expires: -1, path: '/'});
+                            location.href = "./index.html";
+                        }
+                    });*/
+                this.$options.methods.topage(1);
+                setTimeout(function () {
+                    $("#checkAllInput").prop("checked", false);
+                }, 500);
+            },
+            methods: {
+                updateModal: function (mobile) {
+                    vu.$options.methods.emptyFrom($("#updateForm"));
+                    $("#updateForm").find("input[name='name']").val(mobile.name);
+                    $("#updateForm").find("input[name='account']").val(mobile.account);
+                    $("#updateForm").find("input[name='minfo']").val(mobile.minfo);
+                    $("#updateForm").find("input[name='mid']").val(mobile.mid);
+                    $("#updateModal").modal();
+                },
+                update: function () {
+                    var formData = new FormData($("#updateForm")[0]);
+                    axios.post('/mobile/update', formData)
+                        .then(function (response) {
+                            var result = response.data;
+                            if (result.retCode == 0) {
+                                alert("更新成功");
+                                $("#updateModal").modal("hide");
+                                vu.$options.methods.topage(vu.pageInfo.currentNum);
+                            } else {
+                                alert(result.msg);
+                                $("#updateModal").modal("hide");
+                            }
+                        });
+                },
+                addmodal: function () {
+                    vu.$options.methods.emptyFrom($("#addModal").find("input"));
+                    $("#addModal").modal();
+                },
+                add: function () {
+                    var formData = new FormData($("#addForm")[0]);
+                    axios.post('../mobile/add', formData)
+                        .then(function (response) {
+                            var result = response.data;
+                            if (result.retCode == 0) {
+                                alert("添加成功");
+                                $("#addModal").modal("hide");
+                                vu.$options.methods.topage(1);
+                            } else {
+                                alert(result.msg);
+                            }
+                        });
+                    vu.$options.methods.topage(1);
+                },
+                topage: function (page) {
+                    var str = "";
+                    $("#queryForm").find('input').each(function () {
+                        if ($.trim($(this).val()) != "") {
+                            str += $.trim($(this).attr("name")) + "=" + $.trim($(this).val());
+                        }
+                    });
+                    axios.get('../mobile/findAll?page=' + page + "&" + str)
+                        .then(function (response) {
+                            var result = response.data;
+                            vu.pageInfo = result.data;
+                            vu.mobiles = vu.pageInfo.data;
+                        });
+                },
+                deleteMobile: function (moblie) {
+                    if (confirm("您确定要删除设备 " + moblie.name + " 吗?")) {
+                        axios.post('../mobile/delete?mid=' + moblie.mid).then(function (response) {
+                            var data = response.data;
+                            if (data.retCode == 0) {
+                                alert("删除成功");
+                                vu.$options.methods.topage(vu.pageInfo.currentNum);
+                            }
+                        })
+                    }
+                },
+                deleteCliMob: function (cliMob) {
+                    if (confirm("您确定要删除关联设备 " + cliMob.cAccount + " 吗?")) {
+                        axios.post('../cliMob/delete?cmid=' + cliMob.cmid).then(function (response) {
+                            var data = response.data;
+                            if (data.retCode == 0) {
+                                alert("解除成功");
+                                vu.$options.methods.findCliMob();
+                            }
+                        })
+                    }
+                },
+                show: function (mobile) {
+                    $("#clientModal").modal();
+                    vu.mobile = mobile;
+                    vu.$options.methods.findCliMob();
+                },
+                findCliMob: function () {
+                    axios.get('../cliMob/findAll?mid=' + vu.mobile.mid).then(function (response) {
+                        var data = response.data;
+                        vu.clientMobiles = data.data;
+                    })
+                },
+                addClientModal: function () {
+                    axios.get('../cli/findAll').then(function (response) {
+                        var data = response.data;
+                        vu.clients = data.data;
+                        $("#addClientModal").modal();
+                    })
+
+                },
+                addClient: function (client) {
+                    var formData = new FormData($("#addClientForm")[0]);
+                    formData.append("mid", vu.mobile.mid);
+                    axios.post('../cliMob/add', formData)
+                        .then(function (response) {
+                            var result = response.data;
+                            if (result.retCode == 0) {
+                                alert("添加成功");
+                                $("#addClientModal").modal("hide");
+                                vu.$options.methods.findCliMob();
+                            } else {
+                                alert(result.msg);
+                            }
+                        });
+                },
+                emptyFrom: function (ele) {
+                    $.each(ele, function () {
+                        $(this).val("");
+                    })
+                },
+                query: function () {
+                    $("#queryForm").find('input').each(function () {
+                        $(this).val("");
+                    });
+                    var select = $("#querySelect").val();
+                    var inputValue = $("#queryInput").val();
+                    $("#queryForm").find("input[name='" + select + "']").val(inputValue);
+                    vu.$options.methods.topage(1);
+                },
+            }
+
+        })
+    ;
+</script>
+</body>
+</html>
